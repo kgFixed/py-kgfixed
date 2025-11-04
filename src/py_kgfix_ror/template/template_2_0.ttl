@@ -1,0 +1,60 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix org: <http://www.w3.org/ns/org#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+{{ _.id | uri }} a org:Organization ;
+    rdfs:label {{ _.names | selectattr('types', 'equalto', ['ror_display', 'label']) | map(attribute='value') | first | xsd("string") }} ;
+    schema:name {{ _.names | selectattr('types', 'equalto', ['ror_display', 'label']) | map(attribute='value') | first | xsd("string") }} ;
+    {% if _.established -%}
+    schema:foundingDate "{{ _.established | xsd('gyear') }}" ;
+    {% endif -%}
+    {% if _.status -%}
+    org:status {{ _.status | xsd("string") }} ;
+    {% endif -%}
+    {% for type in _.types -%}
+    org:classification {{ type | xsd("string") }} ; 
+    {% endfor -%}
+    dct:modified "{{ GIT_LAST_COMMIT_DATE | xsd('date')}}";
+    {% for name in _.names if "acronym" in name.types -%}
+    org:abbreviation {{ name.value | xsd("string") }} ; 
+    {% endfor -%}
+    {% for domain in _.domains -%}
+    schema:url {{ ("http://" + domain) | uri }} ; 
+    {% endfor -%}
+    {% for link in _.links -%}
+    {% if link.type == "wikipedia" -%}
+    owl:sameAs {{ link.value | uri }} ; 
+    {% endif -%}
+    {% endfor -%}
+    {% for ext_id in _.external_ids -%}
+        {% if ext_id.type == "isni" and ext_id.all -%}
+            schema:sameAs {{ ("http://isni.org/isni/" + ext_id.all[0] | replace(" ", "")) | uri}} ;
+        {% elif ext_id.type == "grid" and ext_id.all -%}
+            schema:sameAs {{ ("https://grid.ac/institutions/" + ext_id.all[0]) | uri }} ;
+        {% elif ext_id.type == "fundref" and ext_id.all -%}
+            schema:sameAs {{ ("https://api.crossref.org/funders/" + ext_id.all[0]) | uri }} ;
+        {% endif -%}
+    {% endfor %}
+    {% for rel in _.relationships -%}
+    org:hasLink [
+        a org:Membership ;
+        org:role "{{ rel.type }}" ;
+        org:member <{{ rel.id }}> ;
+        rdfs:label "{{ rel.label }}" ;
+    ] ; 
+    {% endfor -%}
+    {% for loc in _.locations if loc.geonames_details -%}
+    schema:location [
+        a schema:Place ;
+        geo:asGeoJSON "{\"type\":\"Point\",\"coordinates\":[{{ addr.lng }},{{ addr.lat }}]}" ;
+        schema:address [
+            schema:addressLocality "{{ loc.geonames_details.name }}" ;
+            schema:addressCountry "{{ loc.geonames_details.country_code }}" ;
+        ] ;
+        owl:sameAs {{ ("http://sws.geonames.org/" + loc.geonames_id) | uri }} ;
+    ] ; 
+    {% endfor -%} .

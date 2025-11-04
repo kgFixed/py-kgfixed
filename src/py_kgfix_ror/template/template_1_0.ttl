@@ -1,0 +1,73 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix org: <http://www.w3.org/ns/org#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+{{ _.id | uri }} a org:Organization ;
+    rdfs:label {{ _.name | xsd("string") }} ;
+    schema:name {{ _.name | xsd("string") }} ;
+    {% if _.established -%}
+        schema:foundingDate "{{ _.established | xsd('gyear')}}" ;
+    {% endif -%}
+    org:status {{ _.status | xsd("string") }} ;
+    {% for type in _.types -%}
+        org:classification {{ type | xsd("string") }} ; 
+    {% endfor -%}
+    dct:modified "{{ GIT_LAST_COMMIT_DATE | xsd('date')}}" ;
+    {% if _.acronyms -%}
+        org:abbreviation {{ _.acronyms[0] | xsd("string") }} ;
+    {% endif -%}
+    {% if _.aliases -%}
+        org:alternativeName {{ _.aliases[0] | xsd("string") }} ;
+    {% endif -%}
+    {% if _.email_address -%}
+        schema:email "{{ _.email_address }}" ;
+    {% endif -%}
+    {% for link in _.links -%}
+        schema:url {{ link | uri }} ; 
+    {% endfor -%}
+    {% if _.wikipedia_url -%}
+        owl:sameAs {{ _.wikipedia_url | uri }} ;
+    {% endif -%}
+    {% for addr in _.addresses -%}
+        schema:location [
+            a schema:Place ;
+            {% if addr.lat and addr.lng -%}
+                geo:asGeoJSON "{\"type\":\"Point\",\"coordinates\":[{{ addr.lng }},{{ addr.lat }}]}" ;
+            {% endif -%}
+            {% if addr.city -%}
+                schema:addressLocality {{ addr.city | xsd("string") }} ;
+            {% endif -%}
+            {% if _.country.country_code -%}
+                schema:addressCountry "{{ _.country.country_code }}" ;
+            {% endif -%}
+            {% if addr.geonames_city -%}
+            owl:sameAs {{ ("http://sws.geonames.org/" + (addr.geonames_city.id | string) + "/") | uri }} ;
+            dct:license <{{ addr.geonames_city.license.license }}> ;
+            {% endif -%}
+        ] ; 
+    {% endfor -%}
+    {% if _.external_ids and _.external_ids.ISNI is defined and _.external_ids.ISNI.all -%}
+    {% for isni in _.external_ids.ISNI.all if isni -%}
+    schema:sameAs {{ ("http://isni.org/isni/" + isni | replace(" ", "")) | uri }} ;
+    {% endfor -%}
+    {% endif -%}
+    {% if _.external_ids and _.external_ids.Wikidata is defined and _.external_ids.Wikidata.all -%}
+    {% for wikidata_id in _.external_ids.Wikidata.all if wikidata_id -%}
+    schema:sameAs {{ ("http://www.wikidata.org/entity/" + (wikidata_id | string)) | uri }} ;
+    {% endfor -%}
+    {% endif -%}
+    {% if _.external_ids is defined
+    and _.external_ids.GRID is defined
+    and _.external_ids.GRID.all is defined
+    and _.external_ids.GRID.all -%}
+    {% set grid_id = _.external_ids.GRID.all[0] | string | trim -%}
+    {% if grid_id -%}
+    schema:sameAs {{ ("https://grid.ac/institutions/" + (grid_id | string)) | uri }} ;
+    {% endif -%}
+    {% endif -%}
+.
