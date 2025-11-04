@@ -18,7 +18,7 @@
     {% for type in _.types -%}
     org:classification {{ type | xsd("string") }} ; 
     {% endfor -%}
-    dct:modified "{{ GIT_LAST_COMMIT_DATE | xsd('date')}}";
+    dct:modified {{ GIT_LAST_COMMIT_DATE | xsd('DATE')}};
     {% for name in _.names if "acronym" in name.types -%}
     org:abbreviation {{ name.value | xsd("string") }} ; 
     {% endfor -%}

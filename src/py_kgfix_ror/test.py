@@ -22,8 +22,8 @@ def get_git_last_commit_date(file: Path, release_version: str) -> str:
             cwd=local_path
         )
         git_date = result.stdout.strip() if result.returncode == 0 else "date_unknown"
-        os.environ['GIT_LAST_COMMIT_DATE'] = git_date
-        return git_date  
+        os.environ['GIT_LAST_COMMIT_DATE'] = git_date.split()[0]
+        return git_date.split()[0]  
     except Exception:
         return "date_unknown"
 

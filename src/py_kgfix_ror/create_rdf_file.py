@@ -26,11 +26,10 @@ def json_to_individual_rdf(json_path: str | Path, template_path: Path, output_di
     else:
         raise ValueError("json_path must be a string or Path")
 
-    vars={
-        "GIT_LAST_COMMIT_DATE": os.environ['GIT_LAST_COMMIT_DATE'] 
+    vars = {
+        "GIT_LAST_COMMIT_DATE": os.environ.get('GIT_LAST_COMMIT_DATE', 'date_inconnue')
     }
     
-
     try:
         Subyt(
             template_name=template_path.name,

@@ -19,9 +19,9 @@
     {% for type in _.types -%}
     org:classification {{ type | xsd("string") }} ; 
     {% endfor -%}
-    dct:created {{ _.admin.created.date | xsd('date', '"') }} ;
+    dct:created {{ _.admin.created.date | xsd('DATE') }} ;
     {% if _.admin.last_modified.date -%}
-    dct:modified {{ _.admin.last_modified.date | xsd('date', '"') }} ;
+    dct:modified {{ _.admin.last_modified.date | xsd('DATE') }} ;
     {% else -%}
     {{ GIT_LAST_COMMIT_DATE | xsd('xsd:date', '"') }} ;
     {% endif -%}
