@@ -8,10 +8,14 @@
 @prefix dct: <http://purl.org/dc/terms/> .
 
 {{ _.id | uri }} a org:Organization ;
-    rdfs:label {{ _.names | selectattr('types', 'equalto', ['ror_display', 'label']) | map(attribute='value') | first | xsd("string") }} ;
-    schema:name {{ _.names | selectattr('types', 'equalto', ['ror_display', 'label']) | map(attribute='value') | first | xsd("string") }} ;
+    {% for name in _.names -%}
+    {% if "ror_display" in name.types -%}
+    rdfs:label {{ name.value | xsd("string") }}; 
+    schema:name {{ name.value | xsd("string") }}; 
+    {% endif -%}
+    {% endfor -%}
     {% if _.established -%}
-    schema:foundingDate "{{ _.established | xsd('gyear') }}" ;
+    schema:foundingDate {{ _.established | xsd('gyear') }} ;
     {% endif -%}
     {% if _.status -%}
     org:status {{ _.status | xsd("string") }} ;

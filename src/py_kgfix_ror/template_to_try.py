@@ -4,7 +4,7 @@ from .detect_version_json import detect_ror_version
 from .create_rdf_file import json_to_individual_rdf
 
 # Tries to process a JSON file with different templates based on its detected version.
-def process_ror_file(json_path: str | Path, output_dir: Path) -> None:
+def process_ror_json_to_ttl(json_path: str | Path, output_dir: Path) -> None:
     version = detect_ror_version(json_path)
     
     templates_to_try = []

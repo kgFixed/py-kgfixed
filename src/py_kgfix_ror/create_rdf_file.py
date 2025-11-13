@@ -11,7 +11,7 @@ logging.getLogger("sema.subyt").setLevel(logging.ERROR)
 
 # Function to convert a JSON file to individual RDF files using a template
 def json_to_individual_rdf(json_path: str | Path, template_path: Path, output_dir: Path) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # output_dir.mkdir(parents=True, exist_ok=True)
     
     if isinstance(json_path, str):
         response = requests.get(json_path)

@@ -7,8 +7,12 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 
 {{ _.id | uri }} a org:Organization ;
-    rdfs:label {{ _.names | selectattr('types', 'equalto', ['ror_display', 'label']) | map(attribute='value') | first | xsd("string") }} ;
-    schema:name {{ _.names | selectattr('types', 'equalto', ['ror_display', 'label']) | map(attribute='value') | first | xsd("string") }} ;
+    {% for name in _.names -%}
+    {% if "ror_display" in name.types -%}
+    rdfs:label {{ name.value | xsd("string") }}; 
+    schema:name {{ name.value | xsd("string") }}; 
+    {% endif -%}
+    {% endfor -%}
     {% if _.established -%}
     schema:foundingDate "{{ _.established | xsd('gyear') }}" ;
     {% endif -%}

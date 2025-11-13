@@ -1,23 +1,20 @@
 import logging
 import os
 import re
-import time
 import subprocess
 from pathlib import Path
 from typing import List
 
 from py_kgfix_ror import (
-    git_push_existing_ttl,
-    process_ror_file,
+    process_ror_json_to_ttl,
+    ttl_to_jsonld_local_context,
+    verif_ttl_file
 )
 
-# function to clone a Git repository
-def clone_repository(repo_url: str, branch: str, clone_dir: Path) -> None:
-    clone_dir.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        ['git', 'clone', '-b', branch, repo_url, str(clone_dir)],
-        check=True
-    )
+# configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 # get the json file for one version
 def get_json_files_for_version(local_path: Path, version: str) -> List[Path]:
@@ -28,72 +25,80 @@ def get_json_files_for_version(local_path: Path, version: str) -> List[Path]:
 
 # get the versions to process
 def get_versions_to_process(volume_path: str = "/workspace") -> List[str]:
-    
-    # output_dir = os.path.join(volume_path, "output")
-    # os.makedirs(output_dir, exist_ok=True)
     releases_to_process = []
     
     try:
-        semver_pattern = re.compile(r"^v\d+\.\d+(\.\d+)?$")
+        version_pattern = re.compile(r"^v\d+\.\d+(\.\d+)?$")
         folders = [
             f for f in os.listdir(volume_path) 
-            if os.path.isdir(os.path.join(volume_path, f)) and semver_pattern.match(f)
+            if os.path.isdir(os.path.join(volume_path, f)) and version_pattern.match(f)
         ]
-        releases_to_process = sorted(folders) 
+        
+        for folder in sorted(folders):
+            folder_path = os.path.join(volume_path, folder)
+            
+            json_files = [f for f in os.listdir(folder_path) if f.endswith('.json')]
+            ttl_files = [f for f in os.listdir(folder_path) if f.endswith('.ttl')]
+            
+            json_count = len(json_files)
+            ttl_count = len(ttl_files)
+                        
+            if json_count != ttl_count:
+                releases_to_process.append(folder)
+                
     except Exception as e:
         logging.error(f"Error reading releases from volume: {e}")
-        return
+        return []
     
     return releases_to_process
 
+# get date last commit git
+def get_git_last_commit_date(file: Path, release_version: str) -> None:
+    try:
+        result = subprocess.run(
+            ['git', 'log', '-1', '--pretty=format:%ci', release_version + '/' + file.name],
+            capture_output=True,
+            text=True,
+            cwd=Path("/workspace")
+        )
+        if result.returncode == 0:
+            git_date = result.stdout.strip().split()[0]  
+            os.environ['GIT_LAST_COMMIT_DATE'] = git_date
+        else:
+            os.environ['GIT_LAST_COMMIT_DATE'] = "date_unknown"
+    except Exception:
+        os.environ['GIT_LAST_COMMIT_DATE'] = "date_unknown"
+
 # final processing
-def final_processing(volume_path: str = "/workspace") -> None:
-    
+def final_processing(releases: List[str], volume_path: str = "/workspace") -> None:
     local_path = Path(volume_path)
-    releases_to_process = get_versions_to_process(volume_path)
 
-    if not releases_to_process:
-        logging.warning("No releases found to process")
-        return
-
-    logging.info(f"Processing releases: {releases_to_process}")
-
-    for i, release in enumerate(releases_to_process):
-        releases_file = get_json_files_for_version(local_path, release)
+    for release_name in releases:
+        logging.info(f"Release to process : {release_name}\n")
+        output_dir = local_path / release_name
+        releases_file = get_json_files_for_version(local_path, release_name)
         
         if not releases_file:
-            logging.warning(f"No JSON files found for release {release}")
-            continue
+            logging.error(f"No JSON files found for release {release_name}\n")
 
-        output_dir = local_path / release
         for j, file in enumerate(releases_file):
-            process_ror_file(file, output_dir)
+            ttl_file = output_dir / f"{file.stem}.ttl"
+            get_git_last_commit_date(file, release_name)
+            process_ror_json_to_ttl(file, output_dir)
+            ttl_to_jsonld_local_context(ttl_file)
             progress = round((j + 1) / len(releases_file) * 100)
-            print(f"✅ - {progress}% - {file}")
-        
-        # if len(releases_to_process) > 1 and i > 0 and release != releases_to_process[i-1]:
-        #     print("\nWait for the commit and push files...")
-        #     success = git_push_existing_ttl(
-        #         repo_dir= Path(volume_path),
-        #         target_dir= release,
-        #         version_name=f"{release}",
-        #         tag_version=f"{release}"
-        #     )
+            logging.info(f"✅ - {progress}% - {file}")
 
-        #     if not success:
-        #         print("\n✗ Operation failed. See messages above.")
-        #         exit(1)
-        #     print(f"\n✓ Release {release} pushed successfully!")
+    verif_ttl_file()
 
 # main fonction
 if __name__ == "__main__":
 
     try:
-        final_processing()
+        releases = get_versions_to_process()
+        final_processing(releases)
     except Exception as e:
-        print(f"💥 ERREUR CRITIQUE: {e}")
+        logging.error("💥 Critic Error: {e}")
         import traceback
         traceback.print_exc()
         
-    # local_path = Path(os.getenv('LOCAL_DATA', './default-data')).resolve()
-    # print(local_path)
