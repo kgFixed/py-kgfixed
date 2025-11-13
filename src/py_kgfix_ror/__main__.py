@@ -8,7 +8,7 @@ from typing import List
 from py_kgfix_ror import (
     process_ror_json_to_ttl,
     ttl_to_jsonld_local_context,
-    verif_ttl_file
+    verify_all_ttl_files
 )
 
 # configure logging
@@ -89,7 +89,7 @@ def final_processing(releases: List[str], volume_path: str = "/workspace") -> No
             progress = round((j + 1) / len(releases_file) * 100)
             logging.info(f"✅ - {progress}% - {file}")
 
-    verif_ttl_file()
+    verify_all_ttl_files()
 
 # main fonction
 if __name__ == "__main__":

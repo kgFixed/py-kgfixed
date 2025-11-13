@@ -27,7 +27,7 @@
     {% if _.admin.last_modified.date -%}
     dct:modified {{ _.admin.last_modified.date | xsd('DATE') }} ;
     {% else -%}
-    {{ GIT_LAST_COMMIT_DATE | xsd('xsd:date', '"') }} ;
+    dct:modified {{ GIT_LAST_COMMIT_DATE | xsd('xsd:date', '"') }} ;
     {% endif -%}
     {% for name in _.names -%}
     {% if "acronym" in name.types -%}

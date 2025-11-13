@@ -7,7 +7,7 @@ from rdflib import Graph
 import pyshacl
 
 
-def verif_ttl_file():
+def verify_all_ttl_files():
     # Configure logging
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
