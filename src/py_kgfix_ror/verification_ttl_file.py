@@ -6,7 +6,6 @@ import re
 from rdflib import Graph
 import pyshacl
 
-
 def verify_all_ttl_files():
     # Configure logging
     logging.basicConfig(
@@ -90,7 +89,6 @@ def verify_all_ttl_files():
     except Exception as e:
         logging.error(f"An error occurred while processing the volume: {e}")
         sys.exit(1)
-
 
 # if __name__ == "__main__":
 #     main()

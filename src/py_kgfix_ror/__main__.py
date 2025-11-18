@@ -8,7 +8,9 @@ from typing import List
 from py_kgfix_ror import (
     process_ror_json_to_ttl,
     ttl_to_jsonld_local_context,
-    verify_all_ttl_files
+    verify_all_ttl_files,
+    get_all_latest_files,
+    get_releases_to_process_sorted
 )
 
 # configure logging
@@ -22,35 +24,6 @@ def get_json_files_for_version(local_path: Path, version: str) -> List[Path]:
     if version_path.exists():
         return sorted([f for f in version_path.glob("*.json") if f.is_file()])
     return []
-
-# get the versions to process
-def get_versions_to_process(volume_path: str = "/workspace") -> List[str]:
-    releases_to_process = []
-    
-    try:
-        version_pattern = re.compile(r"^v\d+\.\d+(\.\d+)?$")
-        folders = [
-            f for f in os.listdir(volume_path) 
-            if os.path.isdir(os.path.join(volume_path, f)) and version_pattern.match(f)
-        ]
-        
-        for folder in sorted(folders):
-            folder_path = os.path.join(volume_path, folder)
-            
-            json_files = [f for f in os.listdir(folder_path) if f.endswith('.json')]
-            ttl_files = [f for f in os.listdir(folder_path) if f.endswith('.ttl')]
-            
-            json_count = len(json_files)
-            ttl_count = len(ttl_files)
-                        
-            if json_count != ttl_count:
-                releases_to_process.append(folder)
-                
-    except Exception as e:
-        logging.error(f"Error reading releases from volume: {e}")
-        return []
-    
-    return releases_to_process
 
 # get date last commit git
 def get_git_last_commit_date(file: Path, release_version: str) -> None:
@@ -86,6 +59,7 @@ def final_processing(releases: List[str], volume_path: str = "/workspace") -> No
             get_git_last_commit_date(file, release_name)
             process_ror_json_to_ttl(file, output_dir)
             ttl_to_jsonld_local_context(ttl_file)
+            get_all_latest_files(file.stem, release_name)
             progress = round((j + 1) / len(releases_file) * 100)
             logging.info(f"✅ - {progress}% - {file}")
 
@@ -95,7 +69,7 @@ def final_processing(releases: List[str], volume_path: str = "/workspace") -> No
 if __name__ == "__main__":
 
     try:
-        releases = get_versions_to_process()
+        releases = get_releases_to_process_sorted()
         final_processing(releases)
     except Exception as e:
         logging.error("💥 Critic Error: {e}")
