@@ -61,7 +61,7 @@
       .
     {% for result in data['qres'] -%}
     <feed> tree:member <{{result.isVersionOf.split("/")[-1]}}> .
-    <#{{result.isVersionOf.split("/")[-1]}}>
+    <{{result.isVersionOf.split("/")[-1]}}>
       dc:isVersionOf <{{result.isVersionOf}}> ;
       dc:modified "{{result.last_modified}}"^^xsd:date ;
       rdfs:label "{{result.name}}" ;
