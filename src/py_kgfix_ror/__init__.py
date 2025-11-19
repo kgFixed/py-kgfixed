@@ -7,6 +7,7 @@ from .create_jsonld_file import ttl_to_jsonld_local_context
 from .verification_ttl_file import verify_all_ttl_files
 from .syncro_latest_ttl import get_all_latest_files
 from .sorting_releases import get_releases_to_process_sorted
+from .create_ldes_fragment import create_ldes_fragment, get_latest_minor_version, write_to_csv, create_csv_temp, calculate_next_fragments_safe
 
 __version__ = "0.1.0"
 __author__ = "PROVAIN Antoine"
@@ -19,5 +20,10 @@ __all__ = [
     'ttl_to_jsonld_local_context',
     'verify_all_ttl_files',
     'get_all_latest_files',
-    'get_releases_to_process_sorted'
+    'get_releases_to_process_sorted',
+    'create_ldes_fragment',
+    'get_latest_minor_version',
+    'write_to_csv',
+    'create_csv_temp',
+    'calculate_next_fragments_safe'
 ]

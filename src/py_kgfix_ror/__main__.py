@@ -10,7 +10,12 @@ from py_kgfix_ror import (
     ttl_to_jsonld_local_context,
     verify_all_ttl_files,
     get_all_latest_files,
-    get_releases_to_process_sorted
+    get_releases_to_process_sorted,
+    create_ldes_fragment, 
+    get_latest_minor_version, 
+    write_to_csv, 
+    create_csv_temp, 
+    calculate_next_fragments_safe
 )
 
 # configure logging
@@ -46,9 +51,14 @@ def get_git_last_commit_date(file: Path, release_version: str) -> None:
 def final_processing(releases: List[str], volume_path: str = "/workspace") -> None:
     local_path = Path(volume_path)
 
+    if not releases:
+            logging.error(f"No release to process\n")
+
     for release_name in releases:
         logging.info(f"Release to process : {release_name}\n")
         output_dir = local_path / release_name
+        csv_path = volume_path + f"/{release_name}_temp.csv"
+        create_csv_temp(Path(csv_path))
         releases_file = get_json_files_for_version(local_path, release_name)
         
         if not releases_file:
@@ -56,13 +66,18 @@ def final_processing(releases: List[str], volume_path: str = "/workspace") -> No
 
         for j, file in enumerate(releases_file):
             ttl_file = output_dir / f"{file.stem}.ttl"
+            jsonld_file = output_dir / f"{file.stem}.jsonld"
             get_git_last_commit_date(file, release_name)
             process_ror_json_to_ttl(file, output_dir)
             ttl_to_jsonld_local_context(ttl_file)
             get_all_latest_files(file.stem, release_name)
+            write_to_csv(jsonld_file, Path(csv_path))
             progress = round((j + 1) / len(releases_file) * 100)
             logging.info(f"✅ - {progress}% - {file}")
-
+        latest_version_fragment = get_latest_minor_version(Path("/workspace/LDES"))                                 
+        current_fragment_version, next_fragment_version = calculate_next_fragments_safe(latest_version_fragment)   
+        create_ldes_fragment(Path(csv_path), current_fragment_version, next_fragment_version)
+        
     verify_all_ttl_files()
 
 # main fonction

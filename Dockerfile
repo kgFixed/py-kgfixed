@@ -14,5 +14,5 @@ ENV PYTHONPATH="/app/src:${PYTHONPATH}"
 RUN mkdir -p /workspace
 VOLUME /workspace
 
-ENTRYPOINT ["python", "src/py_kgfix_ror/create_ldes_fragment.py"]
-# ENTRYPOINT ["python", "src/py_kgfix_ror/__main__.py"]
+# ENTRYPOINT ["python", "src/py_kgfix_ror/create_ldes_fragment.py"]
+ENTRYPOINT ["python", "src/py_kgfix_ror/__main__.py"]

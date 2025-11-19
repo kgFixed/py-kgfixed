@@ -1,74 +1,72 @@
-{#
-    ldes fragment template
-    | Description: This template is used to generate the LDES fragment
-    | @param this_fragment_delta: The delta of this fragment
-    | @param next_fragment_delta: The delta of the next fragment
-    | @param retention_period: The retention period of the fragment
-    | @param set['qres']: The query results
-    #}
-    @prefix tree: <https://w3id.org/tree#> .
-    @prefix ldes: <https://w3id.org/ldes#> .
-    @prefix dc: <http://purl.org/dc/terms/> .
-    @prefix sh: <http://www.w3.org/ns/shacl#> .
-    @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-    @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+{#ldes fragment template
+  | Description: This template is used to generate the LDES fragment
+  | @param this_fragment_delta: The delta of this fragment
+  | @param next_fragment_delta: The delta of the next fragment
+  | @param retention_period: The retention period of the fragment
+  | @param set['qres']: The query results#}
+@prefix tree: <https://w3id.org/tree#> .
+@prefix ldes: <https://w3id.org/ldes#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
-    @base <{{base_uri}}{{this_fragment_delta}}.ttl> .
-    
-    <>
-        a tree:Node ;
-        {% if next_fragment_delta %}
-        tree:relation [
-          a tree:LessThanRelation ;
-          tree:node <{{base_uri}}{{next_fragment_delta}}.ttl> ;
-          tree:path dc:modified ;
-          tree:value "{{next_fragment_time}}"^^xsd:dateTime
-        ] ;
-        {% endif %}
-        ldes:retentionPolicy [
-            a ldes:LatestVersionSubset ;
-            ldes:versionAmount {{retention_period}}
-        ] .
-    
-    <feed>
-      a ldes:EventStream ;
-      ldes:timestampPath dc:modified ;
-      ldes:versionOfPath dc:isVersionOf ;
-      tree:shape [
-        a sh:NodeShape ;
-        sh:nodeKind sh:IRI ;
-        {% for path in paths -%}
-        sh:property [
-          sh:datatype xsd:string ;
-          sh:minCount 1 ;
-          sh:path <{{path}}> 
-        ];
-        {% endfor -%}
-        sh:property [
-          sh:datatype xsd:dateTime ;
-          sh:minCount 1 ;
-          sh:path dc:modified
-        ];
-        sh:property [
-          sh:datatype xsd:string ;
-          sh:minCount 1 ;
-          sh:path dc:isVersionOf
-        ];
-        {# TODO : inject ID_path from config.yaml as targetClass #}
-        sh:targetClass skos:Concept
-      ] ;
-      tree:view <> ;
-      .
-    {% for result in data['qres'] -%}
-    <feed> tree:member <{{result.isVersionOf.split("/")[-1]}}> .
-    <{{result.isVersionOf.split("/")[-1]}}>
-      dc:isVersionOf <{{result.isVersionOf}}> ;
-      dc:modified "{{result.last_modified}}"^^xsd:date ;
-      rdfs:label "{{result.name}}" ;
-      a skos:Concept .
-    
-    {{result.isVersionOf | uri}}
-      rdfs:label "{{result.name}}" ;
-      dc:modified "{{result.last_modified}}"^^xsd:date ;
-      .
+@base <{{base_uri}}v{{this_fragment_delta}}.ttl> .
+
+<>
+    a tree:Node ;
+    {% if next_fragment_delta %}
+    tree:relation [
+      a tree:LessThanRelation ;
+      tree:node <{{base_uri}}v{{next_fragment_delta}}.ttl> ;
+      tree:path dc:modified ;
+      tree:value "{{next_fragment_time}}"^^xsd:dateTime
+    ] ;
+    {% endif %}
+    ldes:retentionPolicy [
+        a ldes:LatestVersionSubset ;
+        ldes:versionAmount {{retention_period}}
+    ] .
+
+<feed>
+  a ldes:EventStream ;
+  ldes:timestampPath dc:modified ;
+  ldes:versionOfPath dc:isVersionOf ;
+  tree:shape [
+    a sh:NodeShape ;
+    sh:nodeKind sh:IRI ;
+    {% for path in paths -%}
+    sh:property [
+      sh:datatype xsd:string ;
+      sh:minCount 1 ;
+      sh:path <{{path}}> 
+    ];
     {% endfor -%}
+    sh:property [
+      sh:datatype xsd:dateTime ;
+      sh:minCount 1 ;
+      sh:path dc:modified
+    ];
+    sh:property [
+      sh:datatype xsd:string ;
+      sh:minCount 1 ;
+      sh:path dc:isVersionOf
+    ];
+    {# TODO : inject ID_path from config.yaml as targetClass #}
+    sh:targetClass skos:Concept
+  ] ;
+  tree:view <> ;
+  .
+{% for result in data['qres'] -%}
+<feed> tree:member <{{result.isVersionOf.split("/")[-1]}}> .
+<{{result.isVersionOf.split("/")[-1]}}>
+  dc:isVersionOf <{{result.isVersionOf}}> ;
+  dc:modified "{{result.last_modified}}"^^xsd:date ;
+  rdfs:label "{{result.name}}" ;
+  a skos:Concept .
+
+{{result.isVersionOf | uri}}
+  rdfs:label "{{result.name}}" ;
+  dc:modified "{{result.last_modified}}"^^xsd:date ;
+  .
+{% endfor -%}
