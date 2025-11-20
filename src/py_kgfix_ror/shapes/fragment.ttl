@@ -10,22 +10,23 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-@base <{{base_uri}}v{{this_fragment_delta}}.ttl> .
+@base <{{base_uri}}LDES/{{this_fragment_delta}}.ttl> .
 
 <>
     a tree:Node ;
     {% if next_fragment_delta %}
     tree:relation [
       a tree:LessThanRelation ;
-      tree:node <{{base_uri}}v{{next_fragment_delta}}.ttl> ;
+      tree:node <{{ base_uri }}LDES/{{ next_fragment_delta }}.ttl> ;
       tree:path dc:modified ;
-      tree:value "{{next_fragment_time}}"^^xsd:dateTime
+      tree:value {{ next_fragment_time | xsd('datetime') }}
     ] ;
     {% endif %}
     ldes:retentionPolicy [
         a ldes:LatestVersionSubset ;
-        ldes:versionAmount {{retention_period}}
+        ldes:versionAmount {{ retention_period }}
     ] .
 
 <feed>
@@ -58,15 +59,15 @@
   tree:view <> ;
   .
 {% for result in data['qres'] -%}
-<feed> tree:member <{{result.isVersionOf.split("/")[-1]}}> .
-<{{result.isVersionOf.split("/")[-1]}}>
-  dc:isVersionOf <{{result.isVersionOf}}> ;
-  dc:modified "{{result.last_modified}}"^^xsd:date ;
-  rdfs:label "{{result.name}}" ;
+<feed> tree:member {{ (base_uri + this_fragment_delta + "/" + result.isVersionOf.split("/")[-1] + ".ttl") | uri }} .
+{{ (base_uri + this_fragment_delta + "/" + result.isVersionOf.split("/")[-1] + ".ttl") | uri }}
+  dc:isVersionOf {{ result.isVersionOf | uri }} ;
+  dc:modified {{ result.last_modified | xsd('DATE') }} ;
+  rdfs:label {{ result.name | xsd('String') }} ;
   a skos:Concept .
 
 {{result.isVersionOf | uri}}
-  rdfs:label "{{result.name}}" ;
-  dc:modified "{{result.last_modified}}"^^xsd:date ;
+  rdfs:label {{ result.name | xsd('String') }} ;
+  dc:modified {{ result.last_modified | xsd('DATE') }} ;
   .
 {% endfor -%}

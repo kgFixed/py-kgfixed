@@ -1,9 +1,9 @@
 import logging
 import os
-import re
 import subprocess
 from pathlib import Path
 from typing import List
+import traceback
 
 from py_kgfix_ror import (
     process_ror_json_to_ttl,
@@ -12,10 +12,8 @@ from py_kgfix_ror import (
     get_all_latest_files,
     get_releases_to_process_sorted,
     create_ldes_fragment, 
-    get_latest_minor_version, 
     write_to_csv, 
     create_csv_temp, 
-    calculate_next_fragments_safe
 )
 
 # configure logging
@@ -30,8 +28,8 @@ def get_json_files_for_version(local_path: Path, version: str) -> List[Path]:
         return sorted([f for f in version_path.glob("*.json") if f.is_file()])
     return []
 
-# get date last commit git
-def get_git_last_commit_date(file: Path, release_version: str) -> None:
+# get date last commit git for file
+def get_git_last_commit_date_for_file(file: Path, release_version: str) -> None:
     try:
         result = subprocess.run(
             ['git', 'log', '-1', '--pretty=format:%ci', release_version + '/' + file.name],
@@ -54,7 +52,7 @@ def final_processing(releases: List[str], volume_path: str = "/workspace") -> No
     if not releases:
             logging.error(f"No release to process\n")
 
-    for release_name in releases:
+    for i, release_name in enumerate(releases):
         logging.info(f"Release to process : {release_name}\n")
         output_dir = local_path / release_name
         csv_path = volume_path + f"/{release_name}_temp.csv"
@@ -67,17 +65,15 @@ def final_processing(releases: List[str], volume_path: str = "/workspace") -> No
         for j, file in enumerate(releases_file):
             ttl_file = output_dir / f"{file.stem}.ttl"
             jsonld_file = output_dir / f"{file.stem}.jsonld"
-            get_git_last_commit_date(file, release_name)
+            get_git_last_commit_date_for_file(file, release_name)
             process_ror_json_to_ttl(file, output_dir)
             ttl_to_jsonld_local_context(ttl_file)
             get_all_latest_files(file.stem, release_name)
             write_to_csv(jsonld_file, Path(csv_path))
             progress = round((j + 1) / len(releases_file) * 100)
             logging.info(f"✅ - {progress}% - {file}")
-        latest_version_fragment = get_latest_minor_version(Path("/workspace/LDES"))                                 
-        current_fragment_version, next_fragment_version = calculate_next_fragments_safe(latest_version_fragment)   
-        create_ldes_fragment(Path(csv_path), current_fragment_version, next_fragment_version)
-        
+        create_ldes_fragment(Path(csv_path), release_name, releases[i + 1] if i + 1 < len(releases) else "end")
+
     verify_all_ttl_files()
 
 # main fonction
@@ -88,6 +84,5 @@ if __name__ == "__main__":
         final_processing(releases)
     except Exception as e:
         logging.error("💥 Critic Error: {e}")
-        import traceback
         traceback.print_exc()
         

@@ -10,12 +10,12 @@
 {{ _.id | uri }} a org:Organization ;
     {% for name in _.names -%}
     {% if "ror_display" in name.types -%}
-    rdfs:label {{ name.value | xsd("string") }}; 
-    schema:name {{ name.value | xsd("string") }}; 
+    rdfs:label {{ name.value | xsd('String') }}; 
+    schema:name {{ name.value | xsd('String') }}; 
     {% endif -%}
     {% endfor -%}
     {% if _.established -%}
-    schema:foundingDate "{{ _.established | xsd('gyear') }}" ;
+    schema:foundingDate {{ _.established | xsd('gyear') }} ;
     {% endif -%}
     {% if _.status -%}
     org:status {{ _.status | xsd("string") }} ;

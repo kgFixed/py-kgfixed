@@ -1,12 +1,15 @@
+import os
+import re
 import csv
-import importlib.resources
 import json
 import logging
-import os
-from pathlib import Path
-import re
+import subprocess
 from typing import List
+from pathlib import Path
+import importlib.resources
 from sema.subyt import Subyt
+
+from py_kgfix_ror.sorting_releases import get_releases_to_process_sorted
 
 # configure logging
 logging.basicConfig(
@@ -105,6 +108,22 @@ def calculate_next_fragments_safe(latest_version: str):
         print(f"❌ Error: {e}")
         return "1.01", "1.02"
 
+# get last modified git date for release
+def get_git_last_commit_date_for_release(release_version: str) -> None:
+    try:
+        result = subprocess.run(
+            ['git', 'log', '-1', '--format=%cI', '--', f"{release_version}/"],
+            capture_output=True,
+            text=True,
+            cwd=Path("/workspace")
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+        else:
+            logging.error(f"Git log error for repo {release_version}")
+    except Exception:
+        logging.error(f"Git error for repo {release_version}")
+
 # create LDES fragment
 def create_ldes_fragment(csv_file_path: Path, current_version: str, next_version: str) -> None:
     organizations = []
@@ -126,8 +145,9 @@ def create_ldes_fragment(csv_file_path: Path, current_version: str, next_version
     vars = {
         "this_fragment_delta": current_version, 
         "next_fragment_delta": next_version,
+        "next_fragment_time": get_git_last_commit_date_for_release(next_version) or None,
         "retention_period": 1,
-        "base_uri": "http://w3id.org/kgFixed/ror/ldes/",
+        "base_uri": "http://w3id.org/kgfixed/ror/",
         "data": {
             "qres" : organizations
         }
@@ -138,7 +158,7 @@ def create_ldes_fragment(csv_file_path: Path, current_version: str, next_version
             template_name=template_path.name,
             template_folder=str(template_path.parent),
             source=None,
-            sink=str(ldes_fragment_folder / f"v{current_version}.ttl"),
+            sink=str(ldes_fragment_folder / f"{current_version}.ttl"),
             overwrite_sink=True,
             variables=vars,
             conditional=False
@@ -147,22 +167,25 @@ def create_ldes_fragment(csv_file_path: Path, current_version: str, next_version
         if csv_file_path.exists():
             csv_file_path.unlink()
 
+
+
 if __name__ == "__main__":
 
     volume_path = "/workspace"
-    releases_to_process = ["v1.0", "v1.1"]
+    releases_to_process = get_releases_to_process_sorted()
     local_path = Path(volume_path)
     
     for release in releases_to_process:
         output_dir = local_path / release
-        csv_path = volume_path + f"/{release}_temp.csv"                                                             # ajout
-        create_csv_temp(Path(csv_path))                                                                             # ajout
-        releases_file = get_json_files_for_version(local_path, release)
-        for j, file in enumerate(releases_file):
-            jsonld_file = output_dir / f"{file.stem}.jsonld"
-            write_to_csv(jsonld_file, Path(csv_path))                                                               # ajout
-            progress = round((j + 1) / len(releases_file) * 100)
-            print(f"✅ - {progress}% - {file}")
-        latest_version_fragment = get_latest_minor_version(Path("/workspace/LDES"))                                 # ajout
-        current_fragment_version, next_fragment_version = calculate_next_fragments_safe(latest_version_fragment)    # ajout
-        create_ldes_fragment(Path(csv_path), current_fragment_version, next_fragment_version)                       # ajout
+        print(get_git_last_commit_date_for_release(release))
+        # csv_path = volume_path + f"/{release}_temp.csv"                                                             # ajout
+        # create_csv_temp(Path(csv_path))                                                                             # ajout
+        # releases_file = get_json_files_for_version(local_path, release)
+        # for j, file in enumerate(releases_file):
+        #     jsonld_file = output_dir / f"{file.stem}.jsonld"
+            # write_to_csv(jsonld_file, Path(csv_path))                                                               # ajout
+            # progress = round((j + 1) / len(releases_file) * 100)
+            # print(f"✅ - {progress}% - {file}")
+        # latest_version_fragment = get_latest_minor_version(Path("/workspace/LDES"))                                 # ajout
+        # current_fragment_version, next_fragment_version = calculate_next_fragments_safe(latest_version_fragment)    # ajout
+        # create_ldes_fragment(Path(csv_path), current_fragment_version, next_fragment_version)                       # ajout

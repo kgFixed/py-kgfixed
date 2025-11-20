@@ -44,14 +44,14 @@ def get_all_latest_files(ttl_file_name: str, release_name: str) -> None:
         shutil.copy2(current_ttl_file, latest_ttl_file)
         shutil.copy2(current_json_file, latest_json_file)
         shutil.copy2(current_jsonld_file, latest_jsonld_file)
-        logging.info(f"➕ Créé: {ttl_file_name} (.ttl, .json, .jsonld)")
+        logging.info(f"➕ Created: {ttl_file_name} (.ttl, .json, .jsonld)")
         return
 
     latest_modified_str = parse_ttl_modified_date(latest_ttl_file)
     current_modified_str = parse_ttl_modified_date(current_ttl_file)
 
     if not latest_modified_str or not current_modified_str:
-        logging.error(f"⚠️  Date manquante - copie: {ttl_file_name} (.ttl, .json, .jsonld)")
+        logging.error(f"⚠️  Missing date - copy: {ttl_file_name} (.ttl, .json, .jsonld)")
         return
 
     latest_modified_date = datetime.fromisoformat(latest_modified_str)
@@ -61,7 +61,7 @@ def get_all_latest_files(ttl_file_name: str, release_name: str) -> None:
         shutil.copy2(current_ttl_file, latest_ttl_file)
         shutil.copy2(current_json_file, latest_json_file) 
         shutil.copy2(current_jsonld_file, latest_jsonld_file)
-        logging.info(f"🔄 Mis à jour: {ttl_file_name} (.ttl, .json, .jsonld)")
+        logging.info(f"🔄 Update: {ttl_file_name} (.ttl, .json, .jsonld)")
 
 # if __name__ == "__main__":
 #     print("Starting TTL synchronization...")

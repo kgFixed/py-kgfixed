@@ -8,10 +8,10 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 
 {{ _.id | uri }} a org:Organization ;
-    rdfs:label {{ _.name | xsd("string") }} ;
-    schema:name {{ _.name | xsd("string") }} ;
+    rdfs:label {{ _.name | xsd('String') }} ;
+    schema:name {{ _.name | xsd('String') }} ;
     {% if _.established -%}
-        schema:foundingDate "{{ _.established | xsd('gyear')}}" ;
+        schema:foundingDate {{ _.established | xsd('gyear')}} ;
     {% endif -%}
     org:status {{ _.status | xsd("string") }} ;
     {% for type in _.types -%}
