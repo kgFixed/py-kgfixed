@@ -74,40 +74,6 @@ def write_to_csv(jsonld_file: Path, csv_file_path: Path) -> None:
         
         writer.writerow(row_data)
     
-# get latest minor version
-def get_latest_minor_version(ldes_folder: Path) -> str:
-    version_files = []
-    
-    for file_path in ldes_folder.glob("*.ttl"):
-        match = re.search(r'v(\d+)\.(\d+)', file_path.stem)
-        if match:
-            major, minor = match.groups()
-            version_files.append((int(major), int(minor)))
-    
-    if not version_files:
-        return "1.00" 
-    latest = sorted(version_files)[-1]
-    return f"{latest[0]}.{latest[1]:02d}" 
-
-# get current and next fragment version
-def calculate_next_fragments_safe(latest_version: str):
-    try:
-        major, minor = latest_version.split('.')
-        minor_int = int(minor)
-        
-        if minor_int + 1 > 99:
-            current_fragment_version = f"{int(major) + 1}.00"
-            next_fragment_version = f"{int(major) + 1}.01"
-        else:
-            current_fragment_version = f"{major}.{(minor_int + 1):02d}"
-            next_fragment_version = f"{major}.{(minor_int + 2):02d}"
-        
-        return current_fragment_version, next_fragment_version
-        
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return "1.01", "1.02"
-
 # get last modified git date for release
 def get_git_last_commit_date_for_release(release_version: str) -> None:
     try:
@@ -167,17 +133,15 @@ def create_ldes_fragment(csv_file_path: Path, current_version: str, next_version
         if csv_file_path.exists():
             csv_file_path.unlink()
 
+# if __name__ == "__main__":
 
-
-if __name__ == "__main__":
-
-    volume_path = "/workspace"
-    releases_to_process = get_releases_to_process_sorted()
-    local_path = Path(volume_path)
+#     volume_path = "/workspace"
+#     releases_to_process = get_releases_to_process_sorted()
+#     local_path = Path(volume_path)
     
-    for release in releases_to_process:
-        output_dir = local_path / release
-        print(get_git_last_commit_date_for_release(release))
+#     for release in releases_to_process:
+#         output_dir = local_path / release
+#         print(get_git_last_commit_date_for_release(release))
         # csv_path = volume_path + f"/{release}_temp.csv"                                                             # ajout
         # create_csv_temp(Path(csv_path))                                                                             # ajout
         # releases_file = get_json_files_for_version(local_path, release)
