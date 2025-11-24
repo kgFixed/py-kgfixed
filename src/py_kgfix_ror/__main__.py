@@ -1,9 +1,9 @@
-import logging
 import os
-import subprocess
-from pathlib import Path
-from typing import List
+import logging
 import traceback
+import subprocess
+from typing import List
+from pathlib import Path
 
 from py_kgfix_ror import (
     process_ror_json_to_ttl,

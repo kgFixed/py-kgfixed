@@ -1,5 +1,4 @@
 import os
-import re
 import csv
 import json
 import logging
@@ -9,7 +8,7 @@ from pathlib import Path
 import importlib.resources
 from sema.subyt import Subyt
 
-from py_kgfix_ror.sorting_releases import get_releases_to_process_sorted
+# from py_kgfix_ror.sorting_releases import get_releases_to_process_sorted
 
 # configure logging
 logging.basicConfig(
