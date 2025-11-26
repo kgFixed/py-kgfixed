@@ -13,7 +13,8 @@ from py_kgfix_ror import (
     get_releases_to_process_sorted,
     create_ldes_fragment, 
     write_to_csv, 
-    create_csv_temp, 
+    create_csv_temp,
+    get_latest_ldes_fragment
 )
 
 # configure logging
@@ -72,8 +73,9 @@ def final_processing(releases: List[str], volume_path: str = "/workspace") -> No
             write_to_csv(jsonld_file, Path(csv_path))
             progress = round((j + 1) / len(releases_file) * 100)
             logging.info(f"✅ - {progress}% - {file}")
-        create_ldes_fragment(Path(csv_path), release_name, releases[i + 1] if i + 1 < len(releases) else "end")
+        create_ldes_fragment(Path(csv_path), release_name, releases[i + 1] if i + 1 < len(releases) else None)
 
+    get_latest_ldes_fragment(releases[-1])
     verify_all_ttl_files()
 
 # main fonction

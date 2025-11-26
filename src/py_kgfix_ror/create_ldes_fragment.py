@@ -2,6 +2,7 @@ import os
 import csv
 import json
 import logging
+import shutil
 import subprocess
 from typing import List
 from pathlib import Path
@@ -131,6 +132,22 @@ def create_ldes_fragment(csv_file_path: Path, current_version: str, next_version
     finally:
         if csv_file_path.exists():
             csv_file_path.unlink()
+
+# create latest LDES fragment
+def get_latest_ldes_fragment(fragment_version: str) -> None:
+    try:
+        ldes_folder = Path("/workspace/LDES")
+        latest_file = ldes_folder / "latest.ttl"
+        fragment_file = ldes_folder / f"{fragment_version}.ttl"
+        
+        if fragment_file.exists():
+            shutil.copy2(fragment_file, latest_file)
+            logging.info(f"✅ latest.ttl created from {fragment_version}.ttl")
+        else:
+            logging.error(f"❌ Fragment {fragment_version}.ttl not found")
+            
+    except Exception as e:
+        logging.error(f"❌ Creation error latest.ttl: {e}")
 
 # if __name__ == "__main__":
 
