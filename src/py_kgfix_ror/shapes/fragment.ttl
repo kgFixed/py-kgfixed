@@ -12,14 +12,14 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-@base <{{base_uri}}LDES/{{this_fragment_delta}}.ttl> .
+@base <{{base_uri}}LDES/{{this_fragment_delta}}> .
 
 <>
     a tree:Node ;
     {% if next_fragment_delta %}
     tree:relation [
       a tree:GreaterThanRelation ;
-      tree:node <{{ base_uri }}LDES/{{ next_fragment_delta }}.ttl> ;
+      tree:node <{{ base_uri }}LDES/{{ next_fragment_delta }}> ;
       tree:path dc:modified ;
       tree:value {{ next_fragment_time | xsd('datetime') }}
     ] ;
@@ -59,8 +59,8 @@
   tree:view <> ;
   .
 {% for result in data['qres'] -%}
-<feed> tree:member {{ (base_uri + this_fragment_delta + "/" + result.isVersionOf.split("/")[-1] + ".ttl") | uri }} .
-{{ (base_uri + this_fragment_delta + "/" + result.isVersionOf.split("/")[-1] + ".ttl") | uri }}
+<feed> tree:member {{ (base_uri + this_fragment_delta + "/" + result.isVersionOf.split("/")[-1] ) | uri }} .
+{{ (base_uri + this_fragment_delta + "/" + result.isVersionOf.split("/")[-1] ) | uri }}
   dc:isVersionOf {{ result.isVersionOf | uri }} ;
   dc:modified {{ result.last_modified | xsd('DATE') }} ;
   rdfs:label {{ result.name | xsd('String') }} ;
