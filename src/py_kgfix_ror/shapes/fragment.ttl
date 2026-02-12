@@ -18,7 +18,7 @@
     a tree:Node ;
     {% if next_fragment_delta %}
     tree:relation [
-      a tree:GreaterThanRelation ;
+      a tree:LessThanRelation ;
       tree:node <{{ base_uri }}LDES/{{ next_fragment_delta }}> ;
       tree:path dc:modified ;
       tree:value {{ next_fragment_time | xsd('datetime') }}
