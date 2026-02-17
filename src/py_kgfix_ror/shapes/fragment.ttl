@@ -11,6 +11,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix org: <http://www.w3.org/ns/org#> .
 
 @base <{{base_uri}}LDES/{{this_fragment_delta}}> .
 
@@ -54,7 +55,7 @@
       sh:path dc:isVersionOf
     ];
     {# TODO : inject ID_path from config.yaml as targetClass #}
-    sh:targetClass skos:Concept
+    sh:targetClass org:Organization
   ] ;
   tree:view <> ;
   .
@@ -64,7 +65,7 @@
   dc:isVersionOf {{ result.isVersionOf | uri }} ;
   dc:modified {{ result.last_modified | xsd('DATE') }} ;
   rdfs:label {{ result.name | xsd('String') }} ;
-  a skos:Concept .
+  a org:Organization .
 
 {{result.isVersionOf | uri}}
   rdfs:label {{ result.name | xsd('String') }} ;
