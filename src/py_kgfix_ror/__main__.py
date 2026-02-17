@@ -4,6 +4,8 @@ import traceback
 import subprocess
 from typing import List
 from pathlib import Path
+from rdflib import Graph, URIRef
+from rdflib.namespace import RDF
 
 from py_kgfix_ror import (
     process_ror_json_to_ttl,
@@ -62,6 +64,13 @@ def final_processing(releases: List[str], volume_path: str = "/workspace") -> No
     if not releases:
         logging.error(f"No release to process\n")
 
+    total_unique_files = sum(
+        len(get_json_files_for_version(local_path, release)) for release in releases
+    )
+    logging.info(
+        f"Total unique JSON files to process across all releases: {total_unique_files}\n"
+    )
+
     for i, release_name in enumerate(releases):
         logging.info(f"Release to process : {release_name}\n")
         output_dir = local_path / release_name
@@ -93,10 +102,47 @@ def final_processing(releases: List[str], volume_path: str = "/workspace") -> No
         )
 
     get_latest_ldes_fragment(releases[-1])
-    verify_all_ttl_files()
+    # Uncomment to verify all ttl files at the end of the process
+    # verify_all_ttl_files()
 
 
-# main fonction
+def extract_organization_subjects(fragment_path: Path) -> set:
+    organization_uri = URIRef("http://www.w3.org/ns/org#Organization")
+    graph = Graph()
+    try:
+        graph.parse(fragment_path, format="turtle")
+    except Exception as e:
+        logging.error(f"Failed to parse fragment {fragment_path}: {e}")
+        return set()
+
+    return set(graph.subjects(RDF.type, organization_uri))
+
+
+def count_unique_organizations_in_ldes(ldes_folder: Path) -> None:
+    if not ldes_folder.exists():
+        logging.error(f"LDES folder not found: {ldes_folder}")
+        return
+
+    fragment_files = sorted(ldes_folder.glob("*.ttl"))
+    if not fragment_files:
+        logging.error(f"No LDES fragments found in {ldes_folder}")
+        return
+
+    total_unique_subjects = set()
+    for fragment_path in fragment_files:
+        subjects = extract_organization_subjects(fragment_path)
+        total_unique_subjects.update(subjects)
+        logging.info(
+            f"Fragment {fragment_path.name}: {len(subjects)} unique org:Organization"
+        )
+
+    logging.info(
+        "Total unique org:Organization across all fragments: "
+        f"{len(total_unique_subjects)}"
+    )
+
+
+# main function
 if __name__ == "__main__":
 
     try:
@@ -105,6 +151,7 @@ if __name__ == "__main__":
         releases = releases[::-1]
         logging.info(f"Releases to process in reverse order: {releases}\n")
         final_processing(releases)
+        count_unique_organizations_in_ldes(Path("/workspace/LDES"))
     except Exception as e:
         logging.error("💥 Critic Error: {e}")
         traceback.print_exc()
